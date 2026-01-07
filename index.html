@@ -251,17 +251,27 @@
 
   // --- Router ---
   function router() {
-    const hash = location.hash || "#/login";
+    // 1. 주소창의 hash 읽기 (없으면 로그인 화면)
+    let hash = location.hash || "#/login";
+    
+    // 2. # 기호 제거 및 경로 분리 (수정된 핵심 로직)
+    // 예: "#/teacher/class" -> "teacher/class" -> ["teacher", "class"]
+    const pathParts = hash.replace(/^#\/?/, "").split("/");
+    const path = pathParts[0]; // "teacher"
+    const sub = pathParts[1];  // "class"
+
     const view = document.getElementById('view');
-    const [path, sub] = hash.replace("#", "").split("/");
 
     // Nav Update
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    if(path === "teacher" || path.startsWith("/teacher")) document.getElementById('nav-teacher').classList.add('active');
+    if(path === "teacher") document.getElementById('nav-teacher').classList.add('active');
     else if(path === "parent") document.getElementById('nav-parent').classList.add('active');
     else document.getElementById('nav-login').classList.add('active');
 
-    if (path === "login" || path === "") renderLogin(view);
+    // Routing Logic
+    if (path === "login" || path === "") {
+      renderLogin(view);
+    } 
     else if (path === "teacher") {
       document.getElementById('userRole').innerText = "교사용 (Teacher)";
       if(sub === "class") renderClassSimulation(view);
