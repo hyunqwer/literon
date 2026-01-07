@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>초등 문해력 프로그램 | 관리·리포트 플랫폼</title>
+
+  <!-- Font: Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* Colors */
+      --bg-app: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --primary: #0F766E;
+      --primary-light: #F0FDFA;
+      --primary-dark: #115E59;
+      --accent: #3B82F6;
+      --text-main: #1E293B;
+      --text-sub: #64748B;
+      --text-muted: #94A3B8;
+      --line: #E2E8F0;
+      
+      /* Status */
+      --success-bg: #DCFCE7; --success-text: #166534;
+      --warn-bg: #FFF7ED;    --warn-text: #9A3412;
+      
+      /* UI */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --max-w: 600px;
+      --header-h: 60px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: "Noto Sans KR", sans-serif;
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      margin: 0; padding: 0; height: 100%;
+    }
+    
+    .app {
+      display: flex; flex-direction: column; min-height: 100vh;
+      max-width: var(--max-w); margin: 0 auto; background: var(--bg-surface);
+      position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05);
+    }
+    
+    .header {
+      height: var(--header-h); display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+    }
+    .brand { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .brand-logo {
+      width: 24px; height: 24px; background: var(--primary); border-radius: 6px;
+      color: white; display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    
+    .main-content { flex: 1; padding: 20px 20px 100px; animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards & UI */
+    .card {
+      background: white; border-radius: var(--radius-md); padding: 20px;
+      box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 16px;
+      transition: transform 0.1s;
+    }
+    .card.active:active { transform: scale(0.98); }
+    .card.flat { box-shadow: none; background: var(--bg-app); border: none; }
+    
+    .btn {
+      width: 100%; height: 52px; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3); }
+    .btn-secondary { background: white; border: 1px solid var(--line); color: var(--text-sub); }
+    
+    /* Content View (Simulation) */
+    .passage-box {
+      background: #FFF; padding: 20px; border-radius: 12px; line-height: 1.8;
+      font-size: 15px; color: #334155; border: 1px solid var(--line); margin-bottom: 20px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .question-box { margin-bottom: 24px; }
+    .q-text { font-weight: 700; margin-bottom: 12px; font-size: 16px; }
+    .q-options button {
+      display: block; width: 100%; text-align: left; padding: 12px; margin-bottom: 8px;
+      border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--text-sub);
+    }
+    
+    /* Teacher Check UI */
+    .check-panel {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: white; padding: 20px; border-radius: 24px 24px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 100;
+      max-width: var(--max-w); margin: 0 auto;
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .check-panel.open { transform: translateY(0); }
+    
+    .check-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .seg-control { display: flex; gap: 8px; }
+    .seg-btn {
+      width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line);
+      background: #F8FAFC; font-weight: 700; font-size: 16px; color: var(--text-muted);
+    }
+    .seg-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .seg-btn.active[data-val="X"] { background: #EF4444; border-color: #EF4444; }
+    .seg-btn.active[data-val="△"] { background: #F59E0B; border-color: #F59E0B; }
+
+    /* Report Styles */
+    .report-badge { display: inline-block; padding: 4px 10px; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; border-radius: 20px; margin-bottom: 8px; }
+    .compare-box { display: flex; gap: 10px; margin-top: 10px; }
+    .compare-item { flex: 1; padding: 12px; border-radius: 12px; font-size: 13px; }
+    .compare-item.before { background: #F1F5F9; color: var(--text-sub); }
+    .compare-item.after { background: #F0FDFA; color: var(--primary-dark); border: 1px solid #CCFBF1; }
+
+    /* Nav */
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
+      border-top: 1px solid var(--line); display: flex; justify-content: space-around;
+      padding: 8px; z-index: 90; max-width: var(--max-w); margin: 0 auto;
+    }
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-muted); width: 60px; padding: 4px; }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { width: 24px; height: 24px; background: #F1F5F9; border-radius: 8px; margin-bottom: 4px; transition: 0.2s; }
+    .nav-item.active .nav-icon { background: var(--primary-light); }
+
+    /* Util */
+    .h-title { font-size: 20px; font-weight: 800; margin: 0 0 4px; }
+    .h-sub { font-size: 13px; color: var(--text-sub); margin: 0 0 20px; }
+    .hidden { display: none !important; }
+    
+    /* Toast */
+    .toast {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+      background: #1E293B; color: white; padding: 10px 20px; border-radius: 20px;
+      font-size: 13px; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 200;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="brand">
+      <div class="brand-logo">L</div>
+      <span>Literacy</span>
+    </div>
+    <div style="font-size:12px; font-weight:600; color:var(--text-sub);" id="userRole">로그인</div>
+  </header>
+
+  <main class="main-content" id="view"></main>
+
+  <nav class="nav-bar" id="navBar">
+    <a href="#/login" class="nav-item" id="nav-login">
+      <div class="nav-icon"></div><span>홈</span>
+    </a>
+    <a href="#/teacher" class="nav-item" id="nav-teacher">
+      <div class="nav-icon"></div><span>교사</span>
+    </a>
+    <a href="#/parent" class="nav-item" id="nav-parent">
+      <div class="nav-icon"></div><span>학부모</span>
+    </a>
+  </nav>
+
+  <!-- Teacher Check Panel (Slide up) -->
+  <div class="check-panel" id="checkPanel">
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="width:40px; height:4px; background:#E2E8F0; border-radius:2px; margin:0 auto;"></div>
+    </div>
+    
+    <div class="flex-between" style="margin-bottom:20px;">
+      <div>
+        <h3 style="margin:0; font-size:16px;">관찰 체크</h3>
+        <span style="font-size:12px; color:var(--text-sub);">학생의 이해 과정을 기록하세요</span>
+      </div>
+      <button class="btn-secondary" style="width:auto; height:32px; font-size:12px; padding:0 12px;" onclick="closeCheckPanel()">닫기</button>
+    </div>
+
+    <div class="check-row">
+      <span style="font-size:14px; font-weight:600;">1. 질문 먼저 읽기</span>
+      <div class="seg-control">
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs1', 'O')">O</button>
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs1', 'X')">X</button>
+      </div>
+    </div>
+    <div class="check-row">
+      <span style="font-size:14px; font-weight:600;">2. 핵심어 찾기</span>
+      <div class="seg-control">
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs2', 'O')">O</button>
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs2', '△')">△</button>
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs2', 'X')">X</button>
+      </div>
+    </div>
+    <div class="check-row">
+      <span style="font-size:14px; font-weight:600;">3. 말로 설명</span>
+      <div class="seg-control">
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs3', 'O')">O</button>
+        <button class="seg-btn" onclick="toggleBtn(this, 'obs3', 'X')">X</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:10px;" onclick="saveObservation()">저장 및 다음</button>
+  </div>
+  
+  <div class="toast" id="toast">저장되었습니다</div>
+</div>
+
+<script>
+  // --- Data: 1주차 나비 지문 (기획서 반영) ---
+  const contentData = {
+    title: "1주차: 나비의 한살이 (질문 이해)",
+    passage: `나비는 알, 애벌레, 번데기, 어른벌레의 과정을 거쳐 자란다. 알에서 깨어난 애벌레는 잎을 먹으며 빠르게 자란다.<br><br>충분히 자란 애벌레는 번데기가 되고, 이 시기에는 거의 움직이지 않는다. 번데기 안에서는 몸의 모습이 바뀌며 날개가 만들어진다.<br><br>시간이 지나면 번데기에서 나와 어른 나비가 된다.`,
+    questions: [
+      {
+        id: 1,
+        text: "Q1. 이 글에서 설명하고 있는 것은 무엇인가?",
+        guide: "학생에게: '이 문제는 나비에 대해 무엇을 묻고 있지?' 라고 물어보세요."
+      },
+      {
+        id: 2,
+        text: "Q2. 애벌레가 번데기가 되면 어떤 변화가 나타나는가?",
+        guide: "학생에게: '변화'라는 단어에 동그라미를 치게 하세요."
+      },
+      {
+        id: 3,
+        text: "Q3. 이 글의 내용으로 알 수 없는 것은 무엇인가?",
+        guide: "학생에게: '알 수 없는' 조건에 유의하게 하세요."
+      }
+    ]
+  };
+
+  const studentData = {
+    name: "김민준",
+    grade: 3,
+    level: "L2 (질문 이해 단계)",
+    history: {
+      before: "문제를 읽고 바로 답을 고르며, 질문의 조건을 자주 놓침",
+      after: "질문을 먼저 읽고, '무엇을 묻는지' 말한 뒤 지문을 읽음"
+    }
+  };
+
+  // --- Router ---
+  function router() {
+    const hash = location.hash || "#/login";
+    const view = document.getElementById('view');
+    const [path, sub] = hash.replace("#", "").split("/");
+
+    // Nav Update
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    if(path === "teacher" || path.startsWith("/teacher")) document.getElementById('nav-teacher').classList.add('active');
+    else if(path === "parent") document.getElementById('nav-parent').classList.add('active');
+    else document.getElementById('nav-login').classList.add('active');
+
+    if (path === "login" || path === "") renderLogin(view);
+    else if (path === "teacher") {
+      document.getElementById('userRole').innerText = "교사용 (Teacher)";
+      if(sub === "class") renderClassSimulation(view);
+      else renderTeacherDashboard(view);
+    } 
+    else if (path === "parent") {
+      document.getElementById('userRole').innerText = "학부모용 (Parent)";
+      renderParentReport(view);
+    }
+    
+    // Hide/Show Check Panel
+    if(sub !== "class") closeCheckPanel();
+  }
+
+  window.addEventListener('hashchange', router);
+  window.addEventListener('load', router);
+
+  // --- Views ---
+
+  function renderLogin(el) {
+    el.innerHTML = `
+      <div style="padding-top:40px;">
+        <h1 class="h-title">문해력 관리 플랫폼</h1>
+        <p class="h-sub">실제 커리큘럼 기반 수업 시뮬레이션</p>
+        
+        <div class="card active" onclick="location.hash='#/teacher'">
+          <h3 style="margin:0 0 5px; color:var(--primary);">교사용 시작하기</h3>
+          <p style="margin:0; font-size:13px; color:var(--text-sub);">1주차 수업: 질문 이해 훈련</p>
+        </div>
+        
+        <div class="card active" onclick="location.hash='#/parent'">
+          <h3 style="margin:0 0 5px; color:var(--text-main);">학부모용 리포트</h3>
+          <p style="margin:0; font-size:13px; color:var(--text-sub);">월간 리포트 (Before/After)</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTeacherDashboard(el) {
+    el.innerHTML = `
+      <h2 class="h-title">오늘의 수업</h2>
+      <p class="h-sub">1월 7일 (수) · 1주차 진단 수업</p>
+
+      <div class="card active" onclick="location.hash='#/teacher/class'">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="font-weight:700; font-size:16px;">${studentData.name}</span>
+              <span style="background:#FFF7ED; color:#9A3412; font-size:11px; padding:2px 6px; border-radius:4px;">체크 필요</span>
+            </div>
+            <p style="margin:4px 0 0; font-size:13px; color:var(--text-sub);">STEP 1. 나비의 한살이</p>
+          </div>
+          <button class="btn-primary" style="width:auto; height:36px; padding:0 16px; font-size:13px;">수업 시작</button>
+        </div>
+      </div>
+
+      <div class="card flat">
+        <h4 style="margin:0 0 8px; font-size:14px;">교사 가이드 (1주차)</h4>
+        <p style="font-size:13px; color:var(--text-sub); line-height:1.5;">
+          이번 주 목표는 정답을 맞히는 것이 아니라,<br>
+          <b>"지문보다 질문을 먼저 읽는 습관"</b>을 만드는 것입니다.<br>
+          아이가 질문을 읽고 무엇을 묻는지 말하게 유도해주세요.
+        </p>
+      </div>
+    `;
+  }
+
+  function renderClassSimulation(el) {
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <button onclick="history.back()" style="border:none; background:none; font-size:14px; color:var(--text-sub);">← 나가기</button>
+        <div style="font-size:14px; font-weight:700; color:var(--primary);">수업 진행 중</div>
+      </div>
+
+      <h2 class="h-title">${contentData.title}</h2>
+      <p class="h-sub">학생에게 화면을 보여주거나 읽어주세요.</p>
+
+      <div class="passage-box">
+        ${contentData.passage}
+      </div>
+
+      ${contentData.questions.map(q => `
+        <div class="question-box">
+          <div class="q-text">${q.text}</div>
+          <div style="background:#F0FDFA; padding:10px; border-radius:8px; font-size:13px; color:var(--primary-dark); margin-bottom:8px;">
+            💡 교사 가이드: ${q.guide}
+          </div>
+        </div>
+      `).join('')}
+      
+      <div style="height:120px;"></div> <!-- Space for bottom panel -->
+      
+      <div style="position:fixed; bottom:80px; left:0; right:0; padding:20px; text-align:center;">
+        <button class="btn-primary" onclick="openCheckPanel()" style="width:100%; max-width:var(--max-w); margin:0 auto; box-shadow:0 4px 14px rgba(0,0,0,0.2);">
+          학생 관찰 체크하기
+        </button>
+      </div>
+    `;
+  }
+
+  function renderParentReport(el) {
+    el.innerHTML = `
+      <div class="card flat" style="text-align:center; padding:30px 20px; background:linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+        <span class="report-badge">Monthly Report</span>
+        <h2 class="h-title" style="margin-bottom:8px;">1월 문해력 리포트</h2>
+        <p style="font-size:14px; color:var(--text-sub);">
+          민준이는 이번 달 <b>'질문 이해 방식'</b>이<br>크게 변화했습니다.
+        </p>
+      </div>
+
+      <h3 style="font-size:16px; font-weight:700; margin:24px 0 12px;">Before & After</h3>
+      <div class="card">
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; color:var(--text-sub); margin-bottom:4px;">수업 전 (Before)</div>
+          <div style="background:#F1F5F9; padding:12px; border-radius:8px; font-size:14px; line-height:1.5;">
+            "${studentData.history.before}"
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px; color:var(--primary); font-weight:700; margin-bottom:4px;">4주 후 (After)</div>
+          <div style="background:#F0FDFA; border:1px solid #CCFBF1; padding:12px; border-radius:8px; font-size:14px; line-height:1.5; color:var(--primary-dark);">
+            "${studentData.history.after}"
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px; font-weight:700; margin:24px 0 12px;">핵심 지표 변화</h3>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">
+          <span style="font-size:14px;">질문 이해 정확도</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px; color:var(--text-muted); text-decoration:line-through;">L1</span>
+            <span style="font-size:14px; font-weight:700; color:var(--primary);">L2 (상승)</span>
+          </div>
+        </div>
+        <div style="width:100%; height:6px; background:#F1F5F9; border-radius:3px; overflow:hidden;">
+          <div style="width:70%; height:100%; background:var(--primary);"></div>
+        </div>
+        <p style="font-size:12px; color:var(--text-sub); margin-top:8px;">
+          * 정답 개수가 아니라, 질문의 의도를 파악하는 과정을 평가한 결과입니다.
+        </p>
+      </div>
+
+      <div class="card flat">
+        <h4 style="font-size:14px; margin:0 0 8px;">선생님 코멘트</h4>
+        <p style="font-size:13px; color:var(--text-main); line-height:1.6; background:white; padding:12px; border-radius:8px; border:1px solid var(--line);">
+          민준이는 아는 단어가 많지만 문제를 급하게 읽는 습관이 있었습니다.
+          이번 주차 훈련을 통해 <b>'질문에서 힌트 찾기'</b>가 매우 능숙해졌습니다.
+          다음 달에는 문장 간의 연결 훈련을 진행하겠습니다.
+        </p>
+      </div>
+    `;
+  }
+
+  // --- UI Logic ---
+  function openCheckPanel() {
+    document.getElementById('checkPanel').classList.add('open');
+  }
+  
+  function closeCheckPanel() {
+    document.getElementById('checkPanel').classList.remove('open');
+  }
+
+  function toggleBtn(el, group, val) {
+    el.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function saveObservation() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+      closeCheckPanel();
+      location.hash = "#/teacher"; // Return to dashboard
+    }, 1500);
+  }
+</script>
+</body>
+</html>
